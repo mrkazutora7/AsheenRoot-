@@ -1,4 +1,3 @@
-// apps/web/app/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -13,12 +12,15 @@ type Project = {
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [newProject, setNewProject] = useState('')
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const fetchProjects = async () => {
-      const { data, error } = await supabase.from('projects').select('*')
+      setLoading(true)
+      const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false })
       if (error) console.error('Error fetching projects:', error)
       else setProjects(data || [])
+      setLoading(false)
     }
 
     fetchProjects()
@@ -29,9 +31,10 @@ export default function HomePage() {
     const { data, error } = await supabase
       .from('projects')
       .insert([{ name: newProject }])
+      .select()
     if (error) console.error('Error adding project:', error)
     else {
-      setProjects([...projects, ...(data || [])])
+      setProjects((prev) => [...(data || []), ...prev])
       setNewProject('')
     }
   }
@@ -46,21 +49,30 @@ export default function HomePage() {
           value={newProject}
           onChange={(e) => setNewProject(e.target.value)}
           placeholder="New project name"
-          className="border p-2 flex-grow"
+          className="border p-2 flex-grow rounded"
         />
-        <button onClick={addProject} className="bg-blue-600 text-white px-4 py-2 rounded">
+        <button
+          onClick={addProject}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
           Add
         </button>
       </div>
 
-      <ul className="space-y-2">
-        {projects.map((project) => (
-          <li key={project.id} className="border p-3 rounded">
-            <strong>{project.name}</strong>
-            <div className="text-sm text-gray-500">{new Date(project.created_at).toLocaleString()}</div>
-          </li>
-        ))}
-      </ul>
+      {loading ? (
+        <p className="text-gray-500">Loading projects...</p>
+      ) : (
+        <ul className="space-y-2">
+          {projects.map((project) => (
+            <li key={project.id} className="border p-3 rounded shadow-sm">
+              <strong>{project.name}</strong>
+              <div className="text-sm text-gray-500">
+                {new Date(project.created_at).toLocaleString()}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   )
 }
