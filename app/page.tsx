@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
 
 type Project = {
   id: string
@@ -28,10 +28,7 @@ export default function HomePage() {
 
   const addProject = async () => {
     if (!newProject.trim()) return
-    const { data, error } = await supabase
-      .from('projects')
-      .insert([{ name: newProject }])
-      .select()
+    const { data, error } = await supabase.from('projects').insert([{ name: newProject }]).select()
     if (error) console.error('Error adding project:', error)
     else {
       setProjects((prev) => [...(data || []), ...prev])
